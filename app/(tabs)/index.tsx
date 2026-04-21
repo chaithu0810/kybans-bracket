@@ -1,98 +1,317 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get("window");
+
+const teams = [
+  "⚔️ The Swords",
+  "👑 The Kings",
+  "🦁 The Lions",
+  "🐯 The Tigers",
+  "🐺 The Wolves",
+  "🔥 The Titans",
+  "⚡ The Warriors",
+  "🦅 The Eagles",
+  "🐉 The Dragons",
+  "🥷 The Ninjas",
+  "🐂 The Bulls",
+  "🐆 The Panthers",
+  "👻 The Ghosts",
+  "🛡️ The Vikings",
+  "🦈 The Sharks",
+  "🐎 The Riders",
+];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [left1, setLeft1] = useState<string[]>([]);
+  const [right1, setRight1] = useState<string[]>([]);
+  const [left2, setLeft2] = useState<string[]>([]);
+  const [right2, setRight2] = useState<string[]>([]);
+  const [finalists, setFinalists] = useState<string[]>([]);
+  const [champion, setChampion] = useState("");
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const setWinner = (
+    arr: string[],
+    setter: any,
+    index: number,
+    team: string
+  ) => {
+    const copy = [...arr];
+    copy[index] = team;
+    setter(copy);
+  };
+
+  const Match = ({
+    a,
+    b,
+    winner,
+    onPick,
+  }: any) => (
+    <View style={styles.match}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={[
+          styles.card,
+          winner === a && styles.win,
+          winner && winner !== a && styles.lose,
+        ]}
+        onPress={() => onPick(a)}
+      >
+        <Text style={styles.cardText}>{a || "TBD"}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={[
+          styles.card,
+          winner === b && styles.win,
+          winner && winner !== b && styles.lose,
+        ]}
+        onPress={() => onPick(b)}
+      >
+        <Text style={styles.cardText}>{b || "TBD"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.main}>
+      <Text style={styles.header}>🏆 KYBANS TOURNAMENT</Text>
+      <Text style={styles.sub}>
+        Recruiter Winning Premium Frontend
+      </Text>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {/* LEFT ROUND */}
+        <View style={styles.col}>
+          <Text style={styles.title}>ROUND 1</Text>
+
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Match
+              key={i}
+              a={teams[i * 2]}
+              b={teams[i * 2 + 1]}
+              winner={left1[i]}
+              onPick={(team: string) =>
+                setWinner(left1, setLeft1, i, team)
+              }
+            />
+          ))}
+        </View>
+
+        {/* LEFT SEMI */}
+        <View style={styles.col}>
+          <Text style={styles.title}>SEMI</Text>
+
+          <View style={{ marginTop: 80 }}>
+            <Match
+              a={left1[0]}
+              b={left1[1]}
+              winner={left2[0]}
+              onPick={(team: string) =>
+                setWinner(left2, setLeft2, 0, team)
+              }
+            />
+          </View>
+
+          <View style={{ marginTop: 120 }}>
+            <Match
+              a={left1[2]}
+              b={left1[3]}
+              winner={left2[1]}
+              onPick={(team: string) =>
+                setWinner(left2, setLeft2, 1, team)
+              }
+            />
+          </View>
+        </View>
+
+        {/* LEFT FINALIST */}
+        <View style={styles.col}>
+          <Text style={styles.title}>FINALIST</Text>
+
+          <View style={{ marginTop: 220 }}>
+            <Match
+              a={left2[0]}
+              b={left2[1]}
+              winner={finalists[0]}
+              onPick={(team: string) =>
+                setWinner(finalists, setFinalists, 0, team)
+              }
+            />
+          </View>
+        </View>
+
+        {/* FINAL */}
+        <View style={styles.col}>
+          <Text style={styles.finalTitle}>🏆 FINAL</Text>
+
+          <View style={{ marginTop: 220 }}>
+            <Match
+              a={finalists[0]}
+              b={finalists[1]}
+              winner={champion}
+              onPick={(team: string) => setChampion(team)}
+            />
+          </View>
+
+          <View style={styles.championBox}>
+            <Text style={styles.championText}>
+              {champion || "Champion"}
+            </Text>
+          </View>
+        </View>
+
+        {/* RIGHT FINALIST */}
+        <View style={styles.col}>
+          <Text style={styles.title}>FINALIST</Text>
+
+          <View style={{ marginTop: 220 }}>
+            <Match
+              a={right2[0]}
+              b={right2[1]}
+              winner={finalists[1]}
+              onPick={(team: string) =>
+                setWinner(finalists, setFinalists, 1, team)
+              }
+            />
+          </View>
+        </View>
+
+        {/* RIGHT SEMI */}
+        <View style={styles.col}>
+          <Text style={styles.title}>SEMI</Text>
+
+          <View style={{ marginTop: 80 }}>
+            <Match
+              a={right1[0]}
+              b={right1[1]}
+              winner={right2[0]}
+              onPick={(team: string) =>
+                setWinner(right2, setRight2, 0, team)
+              }
+            />
+          </View>
+
+          <View style={{ marginTop: 120 }}>
+            <Match
+              a={right1[2]}
+              b={right1[3]}
+              winner={right2[1]}
+              onPick={(team: string) =>
+                setWinner(right2, setRight2, 1, team)
+              }
+            />
+          </View>
+        </View>
+
+        {/* RIGHT ROUND */}
+        <View style={styles.col}>
+          <Text style={styles.title}>ROUND 1</Text>
+
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Match
+              key={i}
+              a={teams[8 + i * 2]}
+              b={teams[8 + i * 2 + 1]}
+              winner={right1[i]}
+              onPick={(team: string) =>
+                setWinner(right1, setRight1, i, team)
+              }
+            />
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  main: {
+    flex: 1,
+    backgroundColor: "#031226",
+    paddingTop: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+
+  header: {
+    textAlign: "center",
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "bold",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  sub: {
+    textAlign: "center",
+    color: "#94a3b8",
+    marginBottom: 20,
+    marginTop: 5,
+  },
+
+  col: {
+    marginHorizontal: 16,
+  },
+
+  title: {
+    color: "#cbd5e1",
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 18,
+    fontWeight: "bold",
+  },
+
+  finalTitle: {
+    color: "#facc15",
+    fontSize: 22,
+    textAlign: "center",
+    marginBottom: 18,
+    fontWeight: "bold",
+  },
+
+  match: {
+    marginBottom: 22,
+  },
+
+  card: {
+    width: 230,
+    padding: 13,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 14,
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+  },
+
+  cardText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  win: {
+    backgroundColor: "#22c55e",
+  },
+
+  lose: {
+    backgroundColor: "#ef4444",
+  },
+
+  championBox: {
+    backgroundColor: "#facc15",
+    padding: 18,
+    borderRadius: 14,
+    marginTop: 28,
+    alignItems: "center",
+  },
+
+  championText: {
+    fontWeight: "bold",
+    fontSize: 20,
   },
 });

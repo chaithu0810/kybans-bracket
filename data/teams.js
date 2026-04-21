@@ -1,0 +1,18 @@
+export const teams = [
+  { id: 1, name: "The Swords", logo: "⚔️" },
+  { id: 2, name: "The Kings", logo: "👑" },
+  { id: 3, name: "The Lions", logo: "🦁" },
+  { id: 4, name: "The Sharks", logo: "🦈" },
+  { id: 5, name: "The Tigers", logo: "🐯" },
+  { id: 6, name: "The Eagles", logo: "🦅" },
+  { id: 7, name: "The Wolves", logo: "🐺" },
+  { id: 8, name: "The Bulls", logo: "🐂" },
+  { id: 9, name: "The Titans", logo: "🔥" },
+  { id: 10, name: "The Warriors", logo: "⚡" },
+  { id: 11, name: "The Ninjas", logo: "🥷" },
+  { id: 12, name: "The Dragons", logo: "🐉" },
+  { id: 13, name: "The Ghosts", logo: "👻" },
+  { id: 14, name: "The Panthers", logo: "🐆" },
+  { id: 15, name: "The Vikings", logo: "🛡️" },
+  { id: 16, name: "The Falcons", logo: "🦅" },
+];
