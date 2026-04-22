@@ -1,6 +1,12 @@
+// FILE: app/(tabs)/index.tsx
+// AUTO WINNER VERSION
+// Team dropdown only in Round 1
+// Click winner buttons (green/red)
+// Winner automatically moves to next round
+
+import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
 import {
-  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,290 +14,209 @@ import {
   View,
 } from "react-native";
 
-const { width } = Dimensions.get("window");
-
-const teams = [
-  "⚔️ The Swords",
-  "👑 The Kings",
-  "🦁 The Lions",
-  "🐯 The Tigers",
-  "🐺 The Wolves",
-  "🔥 The Titans",
-  "⚡ The Warriors",
-  "🦅 The Eagles",
-  "🐉 The Dragons",
-  "🥷 The Ninjas",
-  "🐂 The Bulls",
-  "🐆 The Panthers",
-  "👻 The Ghosts",
-  "🛡️ The Vikings",
-  "🦈 The Sharks",
-  "🐎 The Riders",
+const teamOptions = [
+  "The Swords",
+  "The Kings",
+  "The Lions",
+  "The Tigers",
+  "The Wolves",
+  "The Titans",
+  "The Warriors",
+  "The Eagles",
+  "The Dragons",
+  "The Ninjas",
+  "The Bulls",
+  "The Panthers",
+  "The Ghosts",
+  "The Vikings",
+  "The Sharks",
+  "The Riders",
 ];
 
 export default function HomeScreen() {
-  const [left1, setLeft1] = useState<string[]>([]);
-  const [right1, setRight1] = useState<string[]>([]);
-  const [left2, setLeft2] = useState<string[]>([]);
-  const [right2, setRight2] = useState<string[]>([]);
-  const [finalists, setFinalists] = useState<string[]>([]);
+  const [teams, setTeams] = useState(Array(16).fill(""));
+  const [r1, setR1] = useState(Array(8).fill(""));
+  const [r2, setR2] = useState(Array(4).fill(""));
+  const [r3, setR3] = useState(Array(2).fill(""));
   const [champion, setChampion] = useState("");
 
-  const setWinner = (
-    arr: string[],
+  const updateTeam = (index: number, value: string) => {
+    const arr = [...teams];
+    arr[index] = value;
+    setTeams(arr);
+  };
+
+  const chooseWinner = (
+    state: string[],
     setter: any,
     index: number,
     team: string
   ) => {
-    const copy = [...arr];
-    copy[index] = team;
-    setter(copy);
+    const arr = [...state];
+    arr[index] = team;
+    setter(arr);
   };
 
-  const Match = ({
-    a,
-    b,
+  const TeamPicker = ({ index }: { index: number }) => (
+    <Picker
+      selectedValue={teams[index]}
+      style={styles.dropdown}
+      onValueChange={(val) => updateTeam(index, val)}
+    >
+      <Picker.Item label={`Select Team ${index + 1}`} value="" />
+      {teamOptions.map((team, i) => (
+        <Picker.Item key={i} label={team} value={team} />
+      ))}
+    </Picker>
+  );
+
+  const MatchCard = ({
+    team1,
+    team2,
     winner,
     onPick,
   }: any) => (
     <View style={styles.match}>
       <TouchableOpacity
-        activeOpacity={0.8}
         style={[
-          styles.card,
-          winner === a && styles.win,
-          winner && winner !== a && styles.lose,
+          styles.team,
+          winner === team1 && styles.win,
+          winner && winner !== team1 && styles.lose,
         ]}
-        onPress={() => onPick(a)}
+        onPress={() => team1 && onPick(team1)}
       >
-        <Text style={styles.cardText}>{a || "TBD"}</Text>
+        <Text>{team1 || "TBD"}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        activeOpacity={0.8}
         style={[
-          styles.card,
-          winner === b && styles.win,
-          winner && winner !== b && styles.lose,
+          styles.team,
+          winner === team2 && styles.win,
+          winner && winner !== team2 && styles.lose,
         ]}
-        onPress={() => onPick(b)}
+        onPress={() => team2 && onPick(team2)}
       >
-        <Text style={styles.cardText}>{b || "TBD"}</Text>
+        <Text>{team2 || "TBD"}</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.main}>
-      <Text style={styles.header}>🏆 KYBANS TOURNAMENT</Text>
-      <Text style={styles.sub}>
-        Recruiter Winning Premium Frontend
-      </Text>
+    <ScrollView horizontal style={styles.container}>
+      {/* ROUND 1 */}
+      <View style={styles.column}>
+        <Text style={styles.heading}>ROUND 1</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {/* LEFT ROUND */}
-        <View style={styles.col}>
-          <Text style={styles.title}>ROUND 1</Text>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <View key={i}>
+            <TeamPicker index={i * 2} />
+            <TeamPicker index={i * 2 + 1} />
 
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Match
-              key={i}
-              a={teams[i * 2]}
-              b={teams[i * 2 + 1]}
-              winner={left1[i]}
+            <MatchCard
+              team1={teams[i * 2]}
+              team2={teams[i * 2 + 1]}
+              winner={r1[i]}
               onPick={(team: string) =>
-                setWinner(left1, setLeft1, i, team)
+                chooseWinner(r1, setR1, i, team)
               }
             />
-          ))}
+          </View>
+        ))}
+      </View>
+
+      {/* QUARTER */}
+      <View style={styles.column}>
+        <Text style={styles.heading}>QUARTER</Text>
+
+        {Array.from({ length: 4 }).map((_, i) => (
+          <MatchCard
+            key={i}
+            team1={r1[i * 2]}
+            team2={r1[i * 2 + 1]}
+            winner={r2[i]}
+            onPick={(team: string) =>
+              chooseWinner(r2, setR2, i, team)
+            }
+          />
+        ))}
+      </View>
+
+      {/* SEMI */}
+      <View style={styles.column}>
+        <Text style={styles.heading}>SEMI</Text>
+
+        {Array.from({ length: 2 }).map((_, i) => (
+          <MatchCard
+            key={i}
+            team1={r2[i * 2]}
+            team2={r2[i * 2 + 1]}
+            winner={r3[i]}
+            onPick={(team: string) =>
+              chooseWinner(r3, setR3, i, team)
+            }
+          />
+        ))}
+      </View>
+
+      {/* FINAL */}
+      <View style={styles.column}>
+        <Text style={styles.heading}>FINAL</Text>
+
+        <MatchCard
+          team1={r3[0]}
+          team2={r3[1]}
+          winner={champion}
+          onPick={(team: string) => setChampion(team)}
+        />
+
+        <View style={styles.champion}>
+          <Text style={styles.championText}>
+            🏆 {champion || "Champion"}
+          </Text>
         </View>
-
-        {/* LEFT SEMI */}
-        <View style={styles.col}>
-          <Text style={styles.title}>SEMI</Text>
-
-          <View style={{ marginTop: 80 }}>
-            <Match
-              a={left1[0]}
-              b={left1[1]}
-              winner={left2[0]}
-              onPick={(team: string) =>
-                setWinner(left2, setLeft2, 0, team)
-              }
-            />
-          </View>
-
-          <View style={{ marginTop: 120 }}>
-            <Match
-              a={left1[2]}
-              b={left1[3]}
-              winner={left2[1]}
-              onPick={(team: string) =>
-                setWinner(left2, setLeft2, 1, team)
-              }
-            />
-          </View>
-        </View>
-
-        {/* LEFT FINALIST */}
-        <View style={styles.col}>
-          <Text style={styles.title}>FINALIST</Text>
-
-          <View style={{ marginTop: 220 }}>
-            <Match
-              a={left2[0]}
-              b={left2[1]}
-              winner={finalists[0]}
-              onPick={(team: string) =>
-                setWinner(finalists, setFinalists, 0, team)
-              }
-            />
-          </View>
-        </View>
-
-        {/* FINAL */}
-        <View style={styles.col}>
-          <Text style={styles.finalTitle}>🏆 FINAL</Text>
-
-          <View style={{ marginTop: 220 }}>
-            <Match
-              a={finalists[0]}
-              b={finalists[1]}
-              winner={champion}
-              onPick={(team: string) => setChampion(team)}
-            />
-          </View>
-
-          <View style={styles.championBox}>
-            <Text style={styles.championText}>
-              {champion || "Champion"}
-            </Text>
-          </View>
-        </View>
-
-        {/* RIGHT FINALIST */}
-        <View style={styles.col}>
-          <Text style={styles.title}>FINALIST</Text>
-
-          <View style={{ marginTop: 220 }}>
-            <Match
-              a={right2[0]}
-              b={right2[1]}
-              winner={finalists[1]}
-              onPick={(team: string) =>
-                setWinner(finalists, setFinalists, 1, team)
-              }
-            />
-          </View>
-        </View>
-
-        {/* RIGHT SEMI */}
-        <View style={styles.col}>
-          <Text style={styles.title}>SEMI</Text>
-
-          <View style={{ marginTop: 80 }}>
-            <Match
-              a={right1[0]}
-              b={right1[1]}
-              winner={right2[0]}
-              onPick={(team: string) =>
-                setWinner(right2, setRight2, 0, team)
-              }
-            />
-          </View>
-
-          <View style={{ marginTop: 120 }}>
-            <Match
-              a={right1[2]}
-              b={right1[3]}
-              winner={right2[1]}
-              onPick={(team: string) =>
-                setWinner(right2, setRight2, 1, team)
-              }
-            />
-          </View>
-        </View>
-
-        {/* RIGHT ROUND */}
-        <View style={styles.col}>
-          <Text style={styles.title}>ROUND 1</Text>
-
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Match
-              key={i}
-              a={teams[8 + i * 2]}
-              b={teams[8 + i * 2 + 1]}
-              winner={right1[i]}
-              onPick={(team: string) =>
-                setWinner(right1, setRight1, i, team)
-              }
-            />
-          ))}
-        </View>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  main: {
+  container: {
     flex: 1,
-    backgroundColor: "#031226",
-    paddingTop: 20,
+    backgroundColor: "#071226",
+    padding: 20,
   },
 
-  header: {
-    textAlign: "center",
+  column: {
+    width: 280,
+    marginRight: 30,
+  },
+
+  heading: {
     color: "#fff",
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: "bold",
-  },
-
-  sub: {
     textAlign: "center",
-    color: "#94a3b8",
     marginBottom: 20,
-    marginTop: 5,
   },
 
-  col: {
-    marginHorizontal: 16,
-  },
-
-  title: {
-    color: "#cbd5e1",
-    fontSize: 18,
-    textAlign: "center",
-    marginBottom: 18,
-    fontWeight: "bold",
-  },
-
-  finalTitle: {
-    color: "#facc15",
-    fontSize: 22,
-    textAlign: "center",
-    marginBottom: 18,
-    fontWeight: "bold",
+  dropdown: {
+    backgroundColor: "#fff",
+    marginBottom: 6,
+    borderRadius: 8,
   },
 
   match: {
-    marginBottom: 22,
+    backgroundColor: "#1e293b",
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 20,
   },
 
-  card: {
-    width: 230,
-    padding: 13,
-    backgroundColor: "#f1f5f9",
-    borderRadius: 14,
+  team: {
+    backgroundColor: "#e2e8f0",
+    padding: 12,
+    borderRadius: 10,
     marginVertical: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-  },
-
-  cardText: {
-    fontSize: 15,
-    fontWeight: "600",
   },
 
   win: {
@@ -302,16 +227,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#ef4444",
   },
 
-  championBox: {
+  champion: {
     backgroundColor: "#facc15",
     padding: 18,
-    borderRadius: 14,
-    marginTop: 28,
+    borderRadius: 12,
+    marginTop: 20,
     alignItems: "center",
   },
 
   championText: {
     fontWeight: "bold",
-    fontSize: 20,
+    fontSize: 18,
   },
 });
