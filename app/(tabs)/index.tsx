@@ -1,11 +1,3 @@
-// FILE: app/(tabs)/index.tsx
-// UPDATED FULL CODE
-// White circle removed
-// Clean tournament bracket
-// Dropdown team selection
-// Winner green / loser red
-// Auto progression
-
 import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
 import {
