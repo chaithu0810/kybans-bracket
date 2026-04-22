@@ -1,7 +1,8 @@
 
 import { Picker } from "@react-native-picker/picker";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,229 +10,395 @@ import {
   View,
 } from "react-native";
 
-const teamOptions = [
-  "The Swords",
-  "The Kings",
-  "The Lions",
-  "The Tigers",
-  "The Wolves",
-  "The Titans",
-  "The Warriors",
-  "The Eagles",
-  "The Dragons",
-  "The Ninjas",
-  "The Bulls",
-  "The Panthers",
-  "The Ghosts",
-  "The Vikings",
-  "The Sharks",
-  "The Riders",
-];
+type Team = string;
+
+const createTeams = (n: number) =>
+  Array.from({ length: n }, (_, i) => `Team ${i + 1}`);
 
 export default function HomeScreen() {
-  const [teams, setTeams] = useState(Array(16).fill(""));
-  const [r1, setR1] = useState(Array(8).fill(""));
-  const [r2, setR2] = useState(Array(4).fill(""));
-  const [r3, setR3] = useState(Array(2).fill(""));
-  const [champion, setChampion] = useState("");
+  const [teamCount, setTeamCount] = useState(8);
+  const allTeams = useMemo(() => createTeams(teamCount), [teamCount]);
 
-  const updateTeam = (index: number, value: string) => {
-    const arr = [...teams];
-    arr[index] = value;
-    setTeams(arr);
+  const [slots, setSlots] = useState<string[]>(Array(8).fill(""));
+  const [r1, setR1] = useState<string[]>(Array(4).fill(""));
+  const [r2, setR2] = useState<string[]>(Array(2).fill(""));
+  const [finalWinner, setFinalWinner] = useState("");
+  const [runnerUp, setRunnerUp] = useState("");
+  const [semiLosers, setSemiLosers] = useState<string[]>(Array(2).fill(""));
+  const [thirdPlace, setThirdPlace] = useState("");
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTeams, setModalTeams] = useState<string[]>([]);
+  const [modalRound, setModalRound] = useState("");
+  const [modalIndex, setModalIndex] = useState(0);
+
+  const rounds = Math.log2(teamCount);
+  const firstRoundMatches = teamCount / 2;
+
+  const selectedTeams = slots.filter(Boolean);
+
+  const resetTournament = (n: number) => {
+    setTeamCount(n);
+    setSlots(Array(n).fill(""));
+    setR1(Array(n / 2).fill(""));
+    setR2(Array(n / 4).fill(""));
+    setFinalWinner("");
+    setRunnerUp("");
+    setSemiLosers(Array(2).fill(""));
+    setThirdPlace("");
   };
 
-  const chooseWinner = (
-    state: string[],
-    setter: any,
-    index: number,
-    team: string
+  const updateSlot = (index: number, value: string) => {
+    const copy = [...slots];
+    copy[index] = value;
+    setSlots(copy);
+  };
+
+  const openWinnerModal = (
+    teams: string[],
+    round: string,
+    index: number
   ) => {
-    const arr = [...state];
-    arr[index] = team;
-    setter(arr);
+    setModalTeams(teams.filter(Boolean));
+    setModalRound(round);
+    setModalIndex(index);
+    setModalVisible(true);
   };
 
-  const TeamPicker = ({ index }: { index: number }) => (
-    <Picker
-      selectedValue={teams[index]}
-      style={styles.dropdown}
-      onValueChange={(val) => updateTeam(index, val)}
-    >
-      <Picker.Item label={`Select Team ${index + 1}`} value="" />
-      {teamOptions.map((team, i) => (
-        <Picker.Item key={i} label={team} value={team} />
-      ))}
-    </Picker>
-  );
+  const selectWinner = (winner: string) => {
+    setModalVisible(false);
+
+    if (modalRound === "r1") {
+      const arr = [...r1];
+      arr[modalIndex] = winner;
+      setR1(arr);
+    }
+
+    if (modalRound === "r2") {
+      const arr = [...r2];
+      arr[modalIndex] = winner;
+      setR2(arr);
+
+      const loser =
+        modalTeams.find((t) => t !== winner) || "";
+      const copy = [...semiLosers];
+      copy[modalIndex] = loser;
+      setSemiLosers(copy);
+    }
+
+    if (modalRound === "final") {
+      setFinalWinner(winner);
+      setRunnerUp(
+        modalTeams.find((t) => t !== winner) || ""
+      );
+    }
+
+    if (modalRound === "third") {
+      setThirdPlace(winner);
+    }
+  };
 
   const MatchCard = ({
     team1,
     team2,
     winner,
-    onPick,
-  }: any) => (
-    <View style={styles.match}>
-      <TouchableOpacity
-        style={[
-          styles.team,
-          winner === team1 && styles.win,
-          winner && winner !== team1 && styles.lose,
-        ]}
-        onPress={() => team1 && onPick(team1)}
-      >
-        <Text>{team1 || "TBD"}</Text>
-      </TouchableOpacity>
+    onChoose,
+  }: any) => {
+    const loser =
+      winner && team1 === winner ? team2 : team1;
 
-      <TouchableOpacity
-        style={[
-          styles.team,
-          winner === team2 && styles.win,
-          winner && winner !== team2 && styles.lose,
-        ]}
-        onPress={() => team2 && onPick(team2)}
-      >
-        <Text>{team2 || "TBD"}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    return (
+      <View style={styles.match}>
+        <View
+          style={[
+            styles.team,
+            winner === team1 && styles.win,
+            loser === team1 && winner && styles.lose,
+          ]}
+        >
+          <Text>{team1 || "TBD"}</Text>
+        </View>
+
+        <View
+          style={[
+            styles.team,
+            winner === team2 && styles.win,
+            loser === team2 && winner && styles.lose,
+          ]}
+        >
+          <Text>{team2 || "TBD"}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onChoose}
+        >
+          <Text style={{ color: "#fff" }}>
+            Select Winner
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
-    <ScrollView horizontal style={styles.container}>
-      {/* ROUND 1 */}
-      <View style={styles.column}>
-        <Text style={styles.heading}>ROUND 1</Text>
+    <View style={styles.main}>
+      <Text style={styles.header}>
+        🏆 Dynamic Tournament Bracket
+      </Text>
 
-        {Array.from({ length: 8 }).map((_, i) => (
-          <View key={i}>
-            <TeamPicker index={i * 2} />
-            <TeamPicker index={i * 2 + 1} />
+      {/* Team Count */}
+      <Picker
+        selectedValue={teamCount}
+        style={styles.countPicker}
+        onValueChange={(v) => resetTournament(v)}
+      >
+        <Picker.Item label="8 Teams" value={8} />
+        <Picker.Item label="16 Teams" value={16} />
+        <Picker.Item label="32 Teams" value={32} />
+      </Picker>
 
+      <ScrollView horizontal>
+        {/* LEVEL 0 */}
+        <View style={styles.column}>
+          <Text style={styles.heading}>LEVEL 0</Text>
+
+          {Array.from({ length: teamCount }).map((_, i) => {
+            const current = slots[i];
+
+            const available = allTeams.filter(
+              (t) =>
+                !selectedTeams.includes(t) ||
+                t === current
+            );
+
+            return (
+              <Picker
+                key={i}
+                selectedValue={current}
+                style={styles.dropdown}
+                onValueChange={(v) =>
+                  updateSlot(i, v)
+                }
+              >
+                <Picker.Item
+                  label={`Select Team ${i + 1}`}
+                  value=""
+                />
+                {available.map((team) => (
+                  <Picker.Item
+                    key={team}
+                    label={team}
+                    value={team}
+                  />
+                ))}
+              </Picker>
+            );
+          })}
+        </View>
+
+        {/* ROUND 1 */}
+        <View style={styles.column}>
+          <Text style={styles.heading}>ROUND 1</Text>
+
+          {Array.from({
+            length: firstRoundMatches,
+          }).map((_, i) => (
             <MatchCard
-              team1={teams[i * 2]}
-              team2={teams[i * 2 + 1]}
+              key={i}
+              team1={slots[i * 2]}
+              team2={slots[i * 2 + 1]}
               winner={r1[i]}
-              onPick={(team: string) =>
-                chooseWinner(r1, setR1, i, team)
+              onChoose={() =>
+                openWinnerModal(
+                  [slots[i * 2], slots[i * 2 + 1]],
+                  "r1",
+                  i
+                )
               }
             />
-          </View>
-        ))}
-      </View>
-
-      {/* QUARTER */}
-      <View style={styles.column}>
-        <Text style={styles.heading}>QUARTER</Text>
-
-        {Array.from({ length: 4 }).map((_, i) => (
-          <MatchCard
-            key={i}
-            team1={r1[i * 2]}
-            team2={r1[i * 2 + 1]}
-            winner={r2[i]}
-            onPick={(team: string) =>
-              chooseWinner(r2, setR2, i, team)
-            }
-          />
-        ))}
-      </View>
-
-      {/* SEMI */}
-      <View style={styles.column}>
-        <Text style={styles.heading}>SEMI</Text>
-
-        {Array.from({ length: 2 }).map((_, i) => (
-          <MatchCard
-            key={i}
-            team1={r2[i * 2]}
-            team2={r2[i * 2 + 1]}
-            winner={r3[i]}
-            onPick={(team: string) =>
-              chooseWinner(r3, setR3, i, team)
-            }
-          />
-        ))}
-      </View>
-
-      {/* FINAL */}
-      <View style={styles.column}>
-        <Text style={styles.heading}>FINAL</Text>
-
-        <MatchCard
-          team1={r3[0]}
-          team2={r3[1]}
-          winner={champion}
-          onPick={(team: string) => setChampion(team)}
-        />
-
-        <View style={styles.champion}>
-          <Text style={styles.championText}>
-            🏆 {champion || "Champion"}
-          </Text>
+          ))}
         </View>
-      </View>
-    </ScrollView>
+
+        {/* SEMI */}
+        <View style={styles.column}>
+          <Text style={styles.heading}>SEMI</Text>
+
+          {Array.from({
+            length: r1.length / 2,
+          }).map((_, i) => (
+            <MatchCard
+              key={i}
+              team1={r1[i * 2]}
+              team2={r1[i * 2 + 1]}
+              winner={r2[i]}
+              onChoose={() =>
+                openWinnerModal(
+                  [r1[i * 2], r1[i * 2 + 1]],
+                  "r2",
+                  i
+                )
+              }
+            />
+          ))}
+        </View>
+
+        {/* FINAL */}
+        <View style={styles.column}>
+          <Text style={styles.heading}>FINAL</Text>
+
+          <MatchCard
+            team1={r2[0]}
+            team2={r2[1]}
+            winner={finalWinner}
+            onChoose={() =>
+              openWinnerModal(
+                [r2[0], r2[1]],
+                "final",
+                0
+              )
+            }
+          />
+
+          <View style={styles.result}>
+            <Text>🥇 Winner: {finalWinner}</Text>
+            <Text>🥈 Runner-up: {runnerUp}</Text>
+          </View>
+        </View>
+
+        {/* THIRD PLACE */}
+        <View style={styles.column}>
+          <Text style={styles.heading}>
+            3rd Place Match
+          </Text>
+
+          <MatchCard
+            team1={semiLosers[0]}
+            team2={semiLosers[1]}
+            winner={thirdPlace}
+            onChoose={() =>
+              openWinnerModal(
+                [semiLosers[0], semiLosers[1]],
+                "third",
+                0
+              )
+            }
+          />
+
+          <View style={styles.result}>
+            <Text>🥉 2nd Runner-up: {thirdPlace}</Text>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* WINNER POPUP */}
+      <Modal visible={modalVisible} transparent>
+        <View style={styles.modalWrap}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>
+              Select Winner
+            </Text>
+
+            {modalTeams.map((team) => (
+              <TouchableOpacity
+                key={team}
+                style={styles.modalBtn}
+                onPress={() => selectWinner(team)}
+              >
+                <Text>{team}</Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              onPress={() =>
+                setModalVisible(false)
+              }
+            >
+              <Text style={{ marginTop: 10 }}>
+                Close
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#071226",
-    padding: 20,
+  main: { flex: 1, backgroundColor: "#081226", paddingTop: 20 },
+  header: {
+    color: "#fff",
+    fontSize: 24,
+    textAlign: "center",
+    fontWeight: "bold",
   },
-
-  column: {
-    width: 280,
-    marginRight: 30,
+  countPicker: {
+    backgroundColor: "#fff",
+    margin: 12,
+    borderRadius: 10,
   },
-
+  column: { width: 290, marginHorizontal: 12 },
   heading: {
     color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 18,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 12,
+    fontWeight: "bold",
   },
-
   dropdown: {
     backgroundColor: "#fff",
-    marginBottom: 6,
-    borderRadius: 8,
+    marginBottom: 10,
   },
-
   match: {
     backgroundColor: "#1e293b",
     padding: 10,
     borderRadius: 12,
-    marginBottom: 20,
+    marginBottom: 16,
   },
-
   team: {
     backgroundColor: "#e2e8f0",
-    padding: 12,
+    padding: 10,
     borderRadius: 10,
-    marginVertical: 5,
+    marginBottom: 6,
   },
-
-  win: {
-    backgroundColor: "#22c55e",
-  },
-
-  lose: {
-    backgroundColor: "#ef4444",
-  },
-
-  champion: {
-    backgroundColor: "#facc15",
-    padding: 18,
-    borderRadius: 12,
-    marginTop: 20,
+  win: { backgroundColor: "#22c55e" },
+  lose: { backgroundColor: "#ef4444" },
+  button: {
+    backgroundColor: "#2563eb",
+    padding: 10,
+    borderRadius: 10,
     alignItems: "center",
+    marginTop: 5,
   },
-
-  championText: {
-    fontWeight: "bold",
+  result: {
+    backgroundColor: "#facc15",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  modalWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,.55)",
+  },
+  modal: {
+    backgroundColor: "#fff",
+    width: 280,
+    padding: 20,
+    borderRadius: 12,
+  },
+  modalTitle: {
     fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 14,
+    textAlign: "center",
+  },
+  modalBtn: {
+    padding: 12,
+    backgroundColor: "#e2e8f0",
+    borderRadius: 10,
+    marginBottom: 8,
   },
 });
