@@ -1,8 +1,3 @@
-// FILE: app/(tabs)/index.tsx
-// AUTO WINNER VERSION
-// Team dropdown only in Round 1
-// Click winner buttons (green/red)
-// Winner automatically moves to next round
 
 import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
