@@ -1,14 +1,14 @@
 // FILE: app/(tabs)/index.tsx
-// FULL CODE
-// ROUND 1 = Button + Dropdown Team Selector
-// Left + Right Bracket
-// Winner popup selection
-// Green winner / Red loser
-// Auto progression to final
+// UPDATED FULL CODE
+// White circle removed
+// Clean tournament bracket
+// Dropdown team selection
+// Winner green / loser red
+// Auto progression
 
+import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
 import {
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,18 +19,18 @@ import {
 const teamOptions = [
   "The Swords",
   "The Kings",
-  "The Lions",
-  "The Tigers",
   "The Wolves",
   "The Titans",
-  "The Warriors",
-  "The Eagles",
   "The Dragons",
   "The Ninjas",
-  "The Bulls",
-  "The Panthers",
   "The Ghosts",
   "The Vikings",
+  "The Lions",
+  "The Tigers",
+  "The Warriors",
+  "The Eagles",
+  "The Bulls",
+  "The Panthers",
   "The Sharks",
   "The Riders",
 ];
@@ -47,11 +47,6 @@ export default function HomeScreen() {
   const [semi, setSemi] = useState(Array(2).fill(""));
   const [winner, setWinner] = useState("");
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalTeams, setModalTeams] = useState([]);
-  const [roundType, setRoundType] = useState("");
-  const [roundIndex, setRoundIndex] = useState(0);
-
   const selectedTeams = teams.filter(Boolean);
 
   const updateTeam = (index, value) => {
@@ -60,54 +55,50 @@ export default function HomeScreen() {
     setTeams(arr);
   };
 
-  const openModal = (list, type, index) => {
-    setModalTeams(list.filter(Boolean));
-    setRoundType(type);
-    setRoundIndex(index);
-    setModalVisible(true);
-  };
+  const chooseWinner = (
+    team,
+    type,
+    index
+  ) => {
+    if (!team) return;
 
-  const chooseWinner = (team) => {
-    setModalVisible(false);
-
-    if (roundType === "r1Left") {
+    if (type === "r1Left") {
       const arr = [...r1Left];
-      arr[roundIndex] = team;
+      arr[index] = team;
       setR1Left(arr);
     }
 
-    if (roundType === "r1Right") {
+    if (type === "r1Right") {
       const arr = [...r1Right];
-      arr[roundIndex] = team;
+      arr[index] = team;
       setR1Right(arr);
     }
 
-    if (roundType === "r2Left") {
+    if (type === "r2Left") {
       const arr = [...r2Left];
-      arr[roundIndex] = team;
+      arr[index] = team;
       setR2Left(arr);
     }
 
-    if (roundType === "r2Right") {
+    if (type === "r2Right") {
       const arr = [...r2Right];
-      arr[roundIndex] = team;
+      arr[index] = team;
       setR2Right(arr);
     }
 
-    if (roundType === "semi") {
+    if (type === "semi") {
       const arr = [...semi];
-      arr[roundIndex] = team;
+      arr[index] = team;
       setSemi(arr);
     }
 
-    if (roundType === "final") {
+    if (type === "final") {
       setWinner(team);
     }
   };
 
-  const TeamDropdown = ({ index }) => {
+  const TeamPicker = ({ index }) => {
     const current = teams[index];
-    const [open, setOpen] = useState(false);
 
     const available = teamOptions.filter(
       (t) =>
@@ -116,49 +107,26 @@ export default function HomeScreen() {
     );
 
     return (
-      <View style={{ marginBottom: 10 }}>
-        <TouchableOpacity
-          style={styles.selectBtn}
-          onPress={() => setOpen(!open)}
-        >
-          <Text style={styles.selectText}>
-            {current ||
-              `Select Team ${index + 1}`}
-          </Text>
-        </TouchableOpacity>
+      <Picker
+        selectedValue={current}
+        style={styles.dropdown}
+        onValueChange={(v) =>
+          updateTeam(index, v)
+        }
+      >
+        <Picker.Item
+          label="Select team"
+          value=""
+        />
 
-        {open && (
-          <View style={styles.dropdownBox}>
-            <ScrollView
-              style={{ maxHeight: 180 }}
-            >
-              <View style={styles.grid}>
-                {available.map((team) => (
-                  <TouchableOpacity
-                    key={team}
-                    style={
-                      styles.teamBtn
-                    }
-                    onPress={() => {
-                      updateTeam(
-                        index,
-                        team
-                      );
-                      setOpen(
-                        false
-                      );
-                    }}
-                  >
-                    <Text>
-                      {team}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        )}
-      </View>
+        {available.map((team) => (
+          <Picker.Item
+            key={team}
+            label={team}
+            value={team}
+          />
+        ))}
+      </Picker>
     );
   };
 
@@ -166,64 +134,50 @@ export default function HomeScreen() {
     team1,
     team2,
     selected,
-    onPress,
+    onWin1,
+    onWin2,
   }) => {
-    const loser =
-      selected &&
-      selected === team1
-        ? team2
-        : team1;
-
     return (
       <View style={styles.match}>
-        <View
+        <TouchableOpacity
           style={[
             styles.team,
             selected ===
               team1 &&
               styles.win,
-            loser ===
-              team1 &&
-              selected &&
+            selected &&
+              selected !==
+                team1 &&
               styles.lose,
           ]}
+          onPress={onWin1}
         >
           <Text>
             {team1 ||
               "TBD"}
           </Text>
-        </View>
+        </TouchableOpacity>
 
-        <View
+        <TouchableOpacity
           style={[
             styles.team,
             selected ===
               team2 &&
               styles.win,
-            loser ===
-              team2 &&
-              selected &&
+            selected &&
+              selected !==
+                team2 &&
               styles.lose,
           ]}
+          onPress={onWin2}
         >
           <Text>
             {team2 ||
               "TBD"}
           </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={onPress}
-        >
-          <Text
-            style={{
-              color: "#fff",
-            }}
-          >
-            Select Winner
-          </Text>
         </TouchableOpacity>
+
+        <View style={styles.line} />
       </View>
     );
   };
@@ -235,7 +189,7 @@ export default function HomeScreen() {
       </Text>
 
       <ScrollView horizontal>
-        {/* LEFT ROUND */}
+        {/* LEFT ROUND 1 */}
         <View style={styles.column}>
           <Text style={styles.heading}>
             ROUND 1
@@ -244,7 +198,7 @@ export default function HomeScreen() {
           {Array.from({
             length: 8,
           }).map((_, i) => (
-            <TeamDropdown
+            <TeamPicker
               key={i}
               index={i}
             />
@@ -266,18 +220,22 @@ export default function HomeScreen() {
               selected={
                 r1Left[i]
               }
-              onPress={() =>
-                openModal(
-                  [
-                    teams[
-                      i *
-                        2
-                    ],
-                    teams[
-                      i *
-                        2 +
-                        1
-                    ],
+              onWin1={() =>
+                chooseWinner(
+                  teams[
+                    i *
+                      2
+                  ],
+                  "r1Left",
+                  i
+                )
+              }
+              onWin2={() =>
+                chooseWinner(
+                  teams[
+                    i *
+                      2 +
+                      1
                   ],
                   "r1Left",
                   i
@@ -313,18 +271,22 @@ export default function HomeScreen() {
               selected={
                 r2Left[i]
               }
-              onPress={() =>
-                openModal(
-                  [
-                    r1Left[
-                      i *
-                        2
-                    ],
-                    r1Left[
-                      i *
-                        2 +
-                        1
-                    ],
+              onWin1={() =>
+                chooseWinner(
+                  r1Left[
+                    i *
+                      2
+                  ],
+                  "r2Left",
+                  i
+                )
+              }
+              onWin2={() =>
+                chooseWinner(
+                  r1Left[
+                    i *
+                      2 +
+                      1
                   ],
                   "r2Left",
                   i
@@ -334,7 +296,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* SEMI */}
+        {/* LEFT SEMI */}
         <View style={styles.column}>
           <Text style={styles.heading}>
             SEMI FINAL
@@ -350,12 +312,16 @@ export default function HomeScreen() {
             selected={
               semi[0]
             }
-            onPress={() =>
-              openModal(
-                [
-                  r2Left[0],
-                  r2Left[1],
-                ],
+            onWin1={() =>
+              chooseWinner(
+                r2Left[0],
+                "semi",
+                0
+              )
+            }
+            onWin2={() =>
+              chooseWinner(
+                r2Left[1],
                 "semi",
                 0
               )
@@ -373,12 +339,16 @@ export default function HomeScreen() {
             team1={semi[0]}
             team2={semi[1]}
             selected={winner}
-            onPress={() =>
-              openModal(
-                [
-                  semi[0],
-                  semi[1],
-                ],
+            onWin1={() =>
+              chooseWinner(
+                semi[0],
+                "final",
+                0
+              )
+            }
+            onWin2={() =>
+              chooseWinner(
+                semi[1],
                 "final",
                 0
               )
@@ -394,7 +364,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* SEMI */}
+        {/* RIGHT SEMI */}
         <View style={styles.column}>
           <Text style={styles.heading}>
             SEMI FINAL
@@ -410,12 +380,16 @@ export default function HomeScreen() {
             selected={
               semi[1]
             }
-            onPress={() =>
-              openModal(
-                [
-                  r2Right[0],
-                  r2Right[1],
-                ],
+            onWin1={() =>
+              chooseWinner(
+                r2Right[0],
+                "semi",
+                1
+              )
+            }
+            onWin2={() =>
+              chooseWinner(
+                r2Right[1],
                 "semi",
                 1
               )
@@ -423,7 +397,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* ROUND 2 */}
+        {/* RIGHT ROUND 2 */}
         <View style={styles.column}>
           <Text style={styles.heading}>
             ROUND 2
@@ -449,18 +423,22 @@ export default function HomeScreen() {
               selected={
                 r2Right[i]
               }
-              onPress={() =>
-                openModal(
-                  [
-                    r1Right[
-                      i *
-                        2
-                    ],
-                    r1Right[
-                      i *
-                        2 +
-                        1
-                    ],
+              onWin1={() =>
+                chooseWinner(
+                  r1Right[
+                    i *
+                      2
+                  ],
+                  "r2Right",
+                  i
+                )
+              }
+              onWin2={() =>
+                chooseWinner(
+                  r1Right[
+                    i *
+                      2 +
+                      1
                   ],
                   "r2Right",
                   i
@@ -470,7 +448,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* RIGHT ROUND */}
+        {/* RIGHT ROUND 1 */}
         <View style={styles.column}>
           <Text style={styles.heading}>
             ROUND 1
@@ -479,7 +457,7 @@ export default function HomeScreen() {
           {Array.from({
             length: 8,
           }).map((_, i) => (
-            <TeamDropdown
+            <TeamPicker
               key={
                 i +
                 8
@@ -514,20 +492,24 @@ export default function HomeScreen() {
               selected={
                 r1Right[i]
               }
-              onPress={() =>
-                openModal(
-                  [
-                    teams[
-                      8 +
-                        i *
-                          2
-                    ],
-                    teams[
-                      8 +
-                        i *
-                          2 +
-                        1
-                    ],
+              onWin1={() =>
+                chooseWinner(
+                  teams[
+                    8 +
+                      i *
+                        2
+                  ],
+                  "r1Right",
+                  i
+                )
+              }
+              onWin2={() =>
+                chooseWinner(
+                  teams[
+                    8 +
+                      i *
+                        2 +
+                      1
                   ],
                   "r1Right",
                   i
@@ -537,55 +519,6 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
-
-      {/* Winner Modal */}
-      <Modal visible={modalVisible} transparent>
-        <View style={styles.modalWrap}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>
-              Select Winner
-            </Text>
-
-            {modalTeams.map(
-              (team) => (
-                <TouchableOpacity
-                  key={team}
-                  style={
-                    styles.modalBtn
-                  }
-                  onPress={() =>
-                    chooseWinner(
-                      team
-                    )
-                  }
-                >
-                  <Text>
-                    {team}
-                  </Text>
-                </TouchableOpacity>
-              )
-            )}
-
-            <TouchableOpacity
-              onPress={() =>
-                setModalVisible(
-                  false
-                )
-              }
-            >
-              <Text
-                style={{
-                  textAlign:
-                    "center",
-                  marginTop: 10,
-                }}
-              >
-                Close
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -595,70 +528,51 @@ const styles =
     main: {
       flex: 1,
       backgroundColor:
-        "#071226",
+        "#04122c",
       paddingTop: 20,
     },
+
     header: {
       color: "#fff",
       fontSize: 24,
-      textAlign: "center",
-      fontWeight:
-        "bold",
-      marginBottom: 20,
-    },
-    column: {
-      width: 300,
-      marginHorizontal: 10,
-    },
-    heading: {
-      color: "#fff",
-      fontSize: 18,
-      textAlign: "center",
-      fontWeight:
-        "bold",
-      marginBottom: 12,
-    },
-    selectBtn: {
-      backgroundColor:
-        "#2563eb",
-      padding: 12,
-      borderRadius: 10,
-    },
-    selectText: {
-      color: "#fff",
       textAlign:
         "center",
       fontWeight:
         "bold",
+      marginBottom: 15,
     },
-    dropdownBox: {
+
+    column: {
+      width: 260,
+      marginHorizontal: 8,
+    },
+
+    heading: {
+      color: "#fff",
+      fontSize: 18,
+      textAlign:
+        "center",
+      fontWeight:
+        "bold",
+      marginBottom: 10,
+    },
+
+    dropdown: {
       backgroundColor:
         "#fff",
-      borderRadius: 10,
-      padding: 10,
-      marginTop: 5,
-    },
-    grid: {
-      flexDirection:
-        "row",
-      flexWrap:
-        "wrap",
-      gap: 8,
-    },
-    teamBtn: {
-      backgroundColor:
-        "#e2e8f0",
-      padding: 10,
+      marginBottom: 6,
       borderRadius: 8,
-      margin: 4,
+      height: 38,
     },
+
     match: {
       backgroundColor:
         "#1e293b",
-      padding: 10,
+      padding: 8,
       borderRadius: 12,
-      marginBottom: 15,
+      marginBottom: 14,
     },
+
     team: {
       backgroundColor:
         "#e2e8f0",
@@ -666,58 +580,30 @@ const styles =
       borderRadius: 10,
       marginBottom: 6,
     },
+
     win: {
       backgroundColor:
         "#22c55e",
     },
+
     lose: {
       backgroundColor:
         "#ef4444",
     },
-    button: {
+
+    line: {
+      height: 2,
       backgroundColor:
-        "#2563eb",
-      padding: 10,
-      borderRadius: 10,
-      alignItems:
-        "center",
+        "#64748b",
+      marginTop: 8,
+      borderRadius: 2,
     },
+
     result: {
       backgroundColor:
         "#facc15",
-      padding: 15,
-      borderRadius: 12,
-      marginTop: 10,
-    },
-    modalWrap: {
-      flex: 1,
-      justifyContent:
-        "center",
-      alignItems:
-        "center",
-      backgroundColor:
-        "rgba(0,0,0,.6)",
-    },
-    modal: {
-      backgroundColor:
-        "#fff",
-      width: 280,
-      padding: 20,
-      borderRadius: 12,
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight:
-        "bold",
-      textAlign:
-        "center",
-      marginBottom: 12,
-    },
-    modalBtn: {
-      backgroundColor:
-        "#e2e8f0",
-      padding: 12,
+      padding: 14,
       borderRadius: 10,
-      marginBottom: 8,
+      marginTop: 10,
     },
   });
